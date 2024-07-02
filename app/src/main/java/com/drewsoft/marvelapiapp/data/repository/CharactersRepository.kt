@@ -1,9 +1,9 @@
 package com.drewsoft.marvelapiapp.data.repository
 
-import com.drewsoft.marvelapiapp.data.OrderBy
 import com.drewsoft.marvelapiapp.data.mapper.toDomainModel
 import com.drewsoft.marvelapiapp.data.remote.api.CharactersClient
 import com.drewsoft.marvelapiapp.domain.model.CharactersResult
+import com.drewsoft.marvelapiapp.domain.model.OrderBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

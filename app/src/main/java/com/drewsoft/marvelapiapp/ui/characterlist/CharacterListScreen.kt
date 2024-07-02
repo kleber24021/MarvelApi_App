@@ -12,57 +12,56 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drewsoft.marvelapiapp.R
 import com.drewsoft.marvelapiapp.domain.model.Character
 import com.drewsoft.marvelapiapp.domain.model.ImageFormat
+import com.drewsoft.marvelapiapp.ui.characterlist.model.CharacterListUiState
 
 @Composable
 fun CharactersListScreen(
-    viewModel: CharacterListViewModel
+    viewModel: CharacterListViewModel,
+    navController: NavHostController
 ) {
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-
-    val uiState by produceState<CharacterListUiState>(
-        initialValue = CharacterListUiState.Loading, key1 = lifecycle, key2 = viewModel
-    ) {
-        lifecycle.repeatOnLifecycle(state = Lifecycle.State.STARTED) {
-            viewModel.uiState.collect { value = it }
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
+    val filterCriteria by viewModel.filterCriteria.collectAsState()
 
     when (uiState) {
         is CharacterListUiState.Error -> {
             //TODO: ERROR State
         }
         CharacterListUiState.Loading -> {
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp)
+            )
         }
 
         is CharacterListUiState.Success -> {
             Box(modifier = Modifier.fillMaxSize()) {
                 CharactersList(
-                    (uiState as CharacterListUiState.Success).characters.characters, viewModel
+                    (uiState as CharacterListUiState.Success).result.characters, viewModel
                 )
             }
         }
@@ -73,9 +72,27 @@ fun CharactersListScreen(
 fun CharactersList(
     characters: List<Character>, viewModel: CharacterListViewModel
 ) {
-    LazyColumn {
+    val listState = rememberLazyListState()
+
+    LazyColumn(
+        state = listState
+    ) {
         items(characters, key = { it.id }) {
             CharacterCard(it, viewModel)
+        }
+    }
+
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItemsCount = listState.layoutInfo.totalItemsCount
+            lastVisibleItem >= totalItemsCount - 5
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value){
+            viewModel.loadMoreCharacters()
         }
     }
 }
@@ -92,7 +109,9 @@ fun CharacterCard(
         elevation = CardDefaults.elevatedCardElevation()
     ) {
         Row(
-            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
@@ -103,7 +122,7 @@ fun CharacterCard(
                     .build(),
                 placeholder = painterResource(id = R.drawable.logo_marvel),
                 error = painterResource(id = R.drawable.logo_marvel),
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillHeight,
                 contentDescription = "${character.name} image"
             )
             Spacer(modifier = Modifier.width(8.dp))

@@ -20,11 +20,3 @@ object DataConsts {
     const val CHARACTER_ID_QUERY = "characterId"
     const val API_KEY_QUERY = "apikey"
 }
-
-enum class OrderBy(
-    val queryString: String
-) {
-    NAME(NAME_QUERY), MODIFIED(MODIFIED_QUERY), DESC_NAME(DESC_NAME_QUERY), DESC_MODIFIED(
-        DESC_MODIDIFIED_QUERY
-    )
-}
