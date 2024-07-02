@@ -16,6 +16,7 @@ import com.drewsoft.marvelapiapp.ui.characterlist.CharactersListScreen
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.CharacterListRoute
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.CharacterDetailRoute
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.Companion.CHAR_ID_PARAM
+import com.drewsoft.marvelapiapp.ui.navigation.Routes.Companion.CHAR_NAME_PARAM
 import com.drewsoft.marvelapiapp.ui.theme.MarvelAPIAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -39,11 +40,15 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(
                         CharacterDetailRoute.route,
-                        arguments = listOf(navArgument(CHAR_ID_PARAM){ type = NavType.IntType})
+                        arguments = listOf(
+                            navArgument(CHAR_ID_PARAM){ type = NavType.IntType},
+                            navArgument(CHAR_NAME_PARAM){ type = NavType.StringType}
+                        )
                     ){backstack ->
                         val charId = backstack.arguments?.getInt(CHAR_ID_PARAM)
+                        val charName = backstack.arguments?.getString(CHAR_NAME_PARAM)
                         if(charId != null){
-                            CharacterDetailScreen(characterDetailViewModel, navController, charId)
+                            CharacterDetailScreen(characterDetailViewModel, navController, charId, charName ?: "")
                         }
                     }
                 }

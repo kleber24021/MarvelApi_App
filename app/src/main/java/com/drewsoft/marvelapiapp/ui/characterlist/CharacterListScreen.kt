@@ -1,5 +1,6 @@
 package com.drewsoft.marvelapiapp.ui.characterlist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,55 +15,92 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drewsoft.marvelapiapp.R
 import com.drewsoft.marvelapiapp.domain.model.Character
 import com.drewsoft.marvelapiapp.domain.model.ImageFormat
+import com.drewsoft.marvelapiapp.domain.model.OrderBy
 import com.drewsoft.marvelapiapp.ui.characterlist.model.CharacterListUiState
+import com.drewsoft.marvelapiapp.ui.navigation.Routes
 
 @Composable
 fun CharactersListScreen(
-    viewModel: CharacterListViewModel,
-    navController: NavHostController
+    viewModel: CharacterListViewModel, navController: NavHostController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val filterCriteria by viewModel.filterCriteria.collectAsState()
 
-    when (uiState) {
-        is CharacterListUiState.Error -> {
-            //TODO: ERROR State
-        }
-        CharacterListUiState.Loading -> {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp)
-            )
-        }
+    Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        CharacterListTopBar(viewModel)
+    }) { paddingValues ->
+        when (uiState) {
+            is CharacterListUiState.Error -> {
+                //TODO: ERROR State
+            }
 
-        is CharacterListUiState.Success -> {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CharactersList(
-                    (uiState as CharacterListUiState.Success).result.characters, viewModel
+            CharacterListUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(paddingValues)
                 )
+            }
+
+            is CharacterListUiState.Success -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    CharactersList(
+                        (uiState as CharacterListUiState.Success).result.characters,
+                        viewModel,
+                        navController
+                    )
+                }
             }
         }
     }
@@ -70,7 +108,7 @@ fun CharactersListScreen(
 
 @Composable
 fun CharactersList(
-    characters: List<Character>, viewModel: CharacterListViewModel
+    characters: List<Character>, viewModel: CharacterListViewModel, navController: NavController
 ) {
     val listState = rememberLazyListState()
 
@@ -78,7 +116,7 @@ fun CharactersList(
         state = listState
     ) {
         items(characters, key = { it.id }) {
-            CharacterCard(it, viewModel)
+            CharacterCard(it, navController)
         }
     }
 
@@ -91,7 +129,7 @@ fun CharactersList(
     }
 
     LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value){
+        if (shouldLoadMore.value) {
             viewModel.loadMoreCharacters()
         }
     }
@@ -99,14 +137,15 @@ fun CharactersList(
 
 @Composable
 fun CharacterCard(
-    character: Character, viewModel: CharacterListViewModel
+    character: Character, navController: NavController
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.elevatedCardElevation()
+            .padding(8.dp)
+            .clickable {
+                navController.navigate(Routes.CharacterDetailRoute.createRoute(character.id, character.name))
+            }, shape = RoundedCornerShape(8.dp), elevation = CardDefaults.elevatedCardElevation()
     ) {
         Row(
             modifier = Modifier
@@ -115,8 +154,7 @@ fun CharacterCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                modifier = Modifier
-                    .size(128.dp),
+                modifier = Modifier.size(128.dp),
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(character.getImageUrl(ImageFormat.LANDSCAPE(ImageFormat.ImageSize.XLARGE)))
                     .build(),
@@ -130,7 +168,7 @@ fun CharacterCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
-            ){
+            ) {
                 Text(
                     modifier = Modifier.padding(vertical = 4.dp),
                     text = character.name,
@@ -145,6 +183,100 @@ fun CharacterCard(
                     maxLines = 4,
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CharacterListTopBar(viewModel: CharacterListViewModel) {
+    var isSearchDisplayed by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var isOrderByMenuDisplayed by rememberSaveable {
+        mutableStateOf(false)
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+
+    val searchTerm by produceState(
+        initialValue = "", key1 = lifecycle, key2 = viewModel
+    ) {
+        lifecycle.repeatOnLifecycle(state = Lifecycle.State.STARTED) {
+            viewModel.filterCriteria.collect { value = it.name ?: "" }
+        }
+    }
+
+    val orderBy by produceState<OrderBy?>(
+        initialValue = null, key1 = lifecycle, key2 = viewModel
+    ) {
+        lifecycle.repeatOnLifecycle(state = Lifecycle.State.STARTED) {
+            viewModel.filterCriteria.collect { value = it.order }
+        }
+    }
+
+    TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ), title = {
+        if (!isSearchDisplayed) {
+            Text(text = "Marvel Api APP")
+        }
+    }, actions = {
+        IconButton(onClick = { isSearchDisplayed = !isSearchDisplayed }) {
+            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search Icon")
+        }
+        if (isSearchDisplayed) {
+            TextField(value = searchTerm, onValueChange = {
+                viewModel.setFilter(it, orderBy)
+            }, maxLines = 1, singleLine = true, trailingIcon = {
+                if (searchTerm.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.setFilter("", orderBy) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Clear,
+                            contentDescription = "Clear text icon"
+                        )
+                    }
+                }
+            })
+        }
+        IconButton(onClick = { isOrderByMenuDisplayed = !isOrderByMenuDisplayed }) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert, contentDescription = "Menu Icon"
+            )
+        }
+        TopBarDropdownMenu(
+            isExpanded = isOrderByMenuDisplayed,
+            selectedOption = orderBy,
+            onDismissRequest = {
+                isOrderByMenuDisplayed = false
+            }) {
+            viewModel.setFilter(searchTerm, it)
+        }
+    })
+}
+
+@Composable
+fun TopBarDropdownMenu(
+    isExpanded: Boolean,
+    selectedOption: OrderBy?,
+    onDismissRequest: () -> Unit,
+    doOnOptionSelected: (OrderBy) -> Unit,
+) {
+    DropdownMenu(expanded = isExpanded, onDismissRequest = onDismissRequest) {
+        OrderBy.entries.forEach { orderBy ->
+            DropdownMenuItem(text = {
+                Text(
+                    text = orderBy.name, color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }, onClick = {
+                onDismissRequest()
+                doOnOptionSelected(orderBy)
+            }, colors = MenuDefaults.itemColors(
+                textColor = if (selectedOption == orderBy) Color.Red else MaterialTheme.colorScheme.secondaryContainer
+            )
+            )
         }
     }
 }
