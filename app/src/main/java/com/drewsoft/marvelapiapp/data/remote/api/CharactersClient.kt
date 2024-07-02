@@ -5,10 +5,11 @@ import com.drewsoft.marvelapiapp.data.DataConsts.CHARACTER_ID_QUERY
 import com.drewsoft.marvelapiapp.data.DataConsts.NAME_STARTS_WITH_QUERY
 import com.drewsoft.marvelapiapp.data.DataConsts.OFFSET_QUERY
 import com.drewsoft.marvelapiapp.data.DataConsts.ORDER_BY_QUERY
-import com.drewsoft.marvelapiapp.data.remote.model.CharacterDetailResponse
-import com.drewsoft.marvelapiapp.data.remote.model.CharactersListResponse
+import com.drewsoft.marvelapiapp.data.remote.entity.CharacterDetailResponse
+import com.drewsoft.marvelapiapp.data.remote.entity.CharactersListResponse
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface CharactersClient {
@@ -24,7 +25,7 @@ interface CharactersClient {
 
     @GET(DataConsts.CHARACTER_DETAIL_URL)
     suspend fun getCharacterDetail(
-        @Query(CHARACTER_ID_QUERY)
+        @Path(CHARACTER_ID_QUERY)
         characterId: Int
     ): Response<CharacterDetailResponse>
 }

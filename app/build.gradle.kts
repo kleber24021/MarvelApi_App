@@ -86,6 +86,7 @@ dependencies {
 
     //Navigation compose navigation
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.icons)
 
     //Retrofit and OkHttp implementation
     implementation(libs.retrofit)

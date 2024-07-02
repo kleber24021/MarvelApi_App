@@ -1,15 +1,15 @@
 package com.drewsoft.marvelapiapp.domain.model
 
-data class Character(
-    val id: Int, val name: String, val description: String, private val thumbnail: Thumbnail
-) {
+data class Thumbnail(
+    val path: String, val extension: String
+){
     fun getImageUrl(
         imageFormat: ImageFormat
     ): String {
-        val baseUrl = if (thumbnail.path.startsWith("http")){
-            thumbnail.path.replace("http", "https")
+        val baseUrl = if (this.path.startsWith("http")){
+            this.path.replace("http", "https")
         }else{
-            thumbnail.path
+            this.path
         }
         val imageFormatString = when (imageFormat) {
             is ImageFormat.LANDSCAPE -> "landscape"
@@ -22,11 +22,7 @@ data class Character(
             ImageFormat.ImageSize.XLARGE -> "_xlarge"
             ImageFormat.ImageSize.AMAZING -> "_amazing"
         }
-        val extension: String = thumbnail.extension
+        val extension: String = this.extension
         return "$baseUrl/$imageFormatString$sizeString.$extension"
     }
 }
-
-data class Thumbnail(
-    val path: String, val extension: String
-)

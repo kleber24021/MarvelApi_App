@@ -1,13 +1,13 @@
-package com.drewsoft.marvelapiapp.ui.characterlist
+package com.drewsoft.marvelapiapp.ui.screens.characterlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.drewsoft.marvelapiapp.domain.DomainConsts.PAGE_SIZE
-import com.drewsoft.marvelapiapp.domain.model.CharactersResult
-import com.drewsoft.marvelapiapp.domain.model.OrderBy
+import com.drewsoft.marvelapiapp.domain.model.characterlist.CharactersListResult
+import com.drewsoft.marvelapiapp.domain.model.characterlist.OrderBy
 import com.drewsoft.marvelapiapp.domain.usecases.GetCharactersUseCase
-import com.drewsoft.marvelapiapp.ui.characterlist.model.CharacterListUiState
-import com.drewsoft.marvelapiapp.ui.characterlist.model.FilterCriteria
+import com.drewsoft.marvelapiapp.ui.screens.characterlist.state.CharacterListUiState
+import com.drewsoft.marvelapiapp.domain.model.characterlist.FilterCriteria
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -48,7 +48,7 @@ class CharacterListViewModel @Inject constructor(
                 getCharactersUseCase(
                     criteria.name, criteria.offset, criteria.order
                 )
-            }.map<CharactersResult, CharacterListUiState> { result ->
+            }.map<CharactersListResult, CharacterListUiState> { result ->
                 val currentState = _uiState.value
                 if (_filterCriteria.value.offset == 0 || currentState !is CharacterListUiState.Success) {
                     CharacterListUiState.Success(result)

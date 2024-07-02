@@ -8,4 +8,6 @@ sealed class ImageFormat(val imageSize: ImageSize){
     enum class ImageSize{
         SMALL, MEDIUM, LARGE, XLARGE, AMAZING
     }
+
+
 }

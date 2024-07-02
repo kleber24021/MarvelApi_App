@@ -1,6 +1,4 @@
-package com.drewsoft.marvelapiapp.ui.characterlist.model
-
-import com.drewsoft.marvelapiapp.domain.model.OrderBy
+package com.drewsoft.marvelapiapp.domain.model.characterlist
 
 data class FilterCriteria(
     val name: String? = null,

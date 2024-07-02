@@ -9,16 +9,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.drewsoft.marvelapiapp.ui.characterdetail.CharacterDetailScreen
-import com.drewsoft.marvelapiapp.ui.characterdetail.CharacterDetailViewModel
-import com.drewsoft.marvelapiapp.ui.characterlist.CharacterListViewModel
-import com.drewsoft.marvelapiapp.ui.characterlist.CharactersListScreen
+import com.drewsoft.marvelapiapp.ui.navigation.Routes
+import com.drewsoft.marvelapiapp.ui.screens.characterdetail.CharacterDetailScreen
+import com.drewsoft.marvelapiapp.ui.screens.characterdetail.CharacterDetailViewModel
+import com.drewsoft.marvelapiapp.ui.screens.characterlist.CharacterListViewModel
+import com.drewsoft.marvelapiapp.ui.screens.characterlist.CharactersListScreen
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.CharacterListRoute
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.CharacterDetailRoute
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.Companion.CHAR_ID_PARAM
 import com.drewsoft.marvelapiapp.ui.navigation.Routes.Companion.CHAR_NAME_PARAM
+import com.drewsoft.marvelapiapp.ui.navigation.Routes.Companion.ENCODED_URL
+import com.drewsoft.marvelapiapp.ui.screens.webview.WebViewScreen
 import com.drewsoft.marvelapiapp.ui.theme.MarvelAPIAppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -49,6 +54,20 @@ class MainActivity : ComponentActivity() {
                         val charName = backstack.arguments?.getString(CHAR_NAME_PARAM)
                         if(charId != null){
                             CharacterDetailScreen(characterDetailViewModel, navController, charId, charName ?: "")
+                        }
+                    }
+                    composable(
+                        Routes.WebViewRoute.route,
+                        arguments = listOf(
+                            navArgument(ENCODED_URL){ type = NavType.StringType},
+                            navArgument(CHAR_NAME_PARAM) {type = NavType.StringType }
+                        )
+                    ){backstack ->
+                        val encodedUrl = backstack.arguments?.getString(ENCODED_URL)
+                        val charName = backstack.arguments?.getString(CHAR_NAME_PARAM)
+                        if (encodedUrl != null && charName != null){
+                            val decodedUrl = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+                            WebViewScreen(decodedUrl, navController, charName)
                         }
                     }
                 }

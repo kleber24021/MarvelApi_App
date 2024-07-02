@@ -1,9 +1,8 @@
 package com.drewsoft.marvelapiapp.data.repository
 
-import com.drewsoft.marvelapiapp.data.mapper.toDomainModel
 import com.drewsoft.marvelapiapp.data.remote.api.CharactersClient
-import com.drewsoft.marvelapiapp.domain.model.CharactersResult
-import com.drewsoft.marvelapiapp.domain.model.OrderBy
+import com.drewsoft.marvelapiapp.data.remote.entity.CharacterDetailResponse
+import com.drewsoft.marvelapiapp.data.remote.entity.CharactersListResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -16,12 +15,23 @@ class CharactersRepository @Inject constructor(
     fun getCharacters(
         queryName: String?,
         offset: Int?,
-        orderBy: OrderBy?
-    ): Flow<CharactersResult?>{
+        orderBy: String?
+    ): Flow<CharactersListResponse?>{
         return flow {
             val result = charactersClient.getCharactersList(
-                queryName, orderBy?.queryString, offset
-            ).body()?.toDomainModel()
+                queryName, orderBy, offset
+            ).body()
+            emit(result)
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun getCharacterDetail(
+        characterId: Int
+    ): Flow<CharacterDetailResponse?>{
+        return flow {
+            val result = charactersClient.getCharacterDetail(
+                characterId
+            ).body()
             emit(result)
         }.flowOn(Dispatchers.IO)
     }

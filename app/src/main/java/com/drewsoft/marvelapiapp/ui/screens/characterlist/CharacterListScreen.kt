@@ -1,4 +1,4 @@
-package com.drewsoft.marvelapiapp.ui.characterlist
+package com.drewsoft.marvelapiapp.ui.screens.characterlist
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Clear
@@ -28,7 +29,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -61,10 +61,10 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drewsoft.marvelapiapp.R
-import com.drewsoft.marvelapiapp.domain.model.Character
+import com.drewsoft.marvelapiapp.domain.model.characterlist.CharacterListItem
 import com.drewsoft.marvelapiapp.domain.model.ImageFormat
-import com.drewsoft.marvelapiapp.domain.model.OrderBy
-import com.drewsoft.marvelapiapp.ui.characterlist.model.CharacterListUiState
+import com.drewsoft.marvelapiapp.domain.model.characterlist.OrderBy
+import com.drewsoft.marvelapiapp.ui.screens.characterlist.state.CharacterListUiState
 import com.drewsoft.marvelapiapp.ui.navigation.Routes
 
 @Composable
@@ -78,17 +78,33 @@ fun CharactersListScreen(
     }) { paddingValues ->
         when (uiState) {
             is CharacterListUiState.Error -> {
-                //TODO: ERROR State
-            }
-
-            CharacterListUiState.Loading -> {
-                CircularProgressIndicator(
+                Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .padding(paddingValues)
-                )
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Red,
+                        imageVector = Icons.Filled.Error,
+                        contentDescription = "Error Icon"
+                    )
+                }
             }
-
+            CharacterListUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ){
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                            .padding(paddingValues)
+                    )
+                }
+            }
             is CharacterListUiState.Success -> {
                 Box(
                     modifier = Modifier
@@ -108,7 +124,7 @@ fun CharactersListScreen(
 
 @Composable
 fun CharactersList(
-    characters: List<Character>, viewModel: CharacterListViewModel, navController: NavController
+    characters: List<CharacterListItem>, viewModel: CharacterListViewModel, navController: NavController
 ) {
     val listState = rememberLazyListState()
 
@@ -137,14 +153,19 @@ fun CharactersList(
 
 @Composable
 fun CharacterCard(
-    character: Character, navController: NavController
+    character: CharacterListItem, navController: NavController
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
             .clickable {
-                navController.navigate(Routes.CharacterDetailRoute.createRoute(character.id, character.name))
+                navController.navigate(
+                    Routes.CharacterDetailRoute.createRoute(
+                        character.id,
+                        character.name
+                    )
+                )
             }, shape = RoundedCornerShape(8.dp), elevation = CardDefaults.elevatedCardElevation()
     ) {
         Row(
@@ -156,7 +177,7 @@ fun CharacterCard(
             AsyncImage(
                 modifier = Modifier.size(128.dp),
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(character.getImageUrl(ImageFormat.LANDSCAPE(ImageFormat.ImageSize.XLARGE)))
+                    .data(character.getImageUrl(ImageFormat.SQUARE(ImageFormat.ImageSize.LARGE)))
                     .build(),
                 placeholder = painterResource(id = R.drawable.logo_marvel),
                 error = painterResource(id = R.drawable.logo_marvel),
@@ -198,6 +219,7 @@ fun CharacterListTopBar(viewModel: CharacterListViewModel) {
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
+    val context = LocalContext.current
 
     val searchTerm by produceState(
         initialValue = "", key1 = lifecycle, key2 = viewModel
@@ -221,7 +243,7 @@ fun CharacterListTopBar(viewModel: CharacterListViewModel) {
         actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ), title = {
         if (!isSearchDisplayed) {
-            Text(text = "Marvel Api APP")
+            Text(text = context.getString(R.string.app_name))
         }
     }, actions = {
         IconButton(onClick = { isSearchDisplayed = !isSearchDisplayed }) {
@@ -262,21 +284,24 @@ fun TopBarDropdownMenu(
     isExpanded: Boolean,
     selectedOption: OrderBy?,
     onDismissRequest: () -> Unit,
-    doOnOptionSelected: (OrderBy) -> Unit,
+    doOnOptionSelected: (OrderBy?) -> Unit,
 ) {
+    val context = LocalContext.current
     DropdownMenu(expanded = isExpanded, onDismissRequest = onDismissRequest) {
         OrderBy.entries.forEach { orderBy ->
             DropdownMenuItem(text = {
                 Text(
-                    text = orderBy.name, color = MaterialTheme.colorScheme.onSecondaryContainer
+                    text = context.getString(orderBy.textToShow),
+                    fontWeight = if (selectedOption == orderBy) FontWeight.ExtraBold else FontWeight.Normal
                 )
             }, onClick = {
                 onDismissRequest()
-                doOnOptionSelected(orderBy)
-            }, colors = MenuDefaults.itemColors(
-                textColor = if (selectedOption == orderBy) Color.Red else MaterialTheme.colorScheme.secondaryContainer
-            )
-            )
+                if (orderBy == selectedOption){
+                    doOnOptionSelected(null)
+                }else{
+                    doOnOptionSelected(orderBy)
+                }
+            })
         }
     }
 }

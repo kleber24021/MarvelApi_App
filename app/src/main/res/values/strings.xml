@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">MarvelAPIApp</string>
+    <string name="app_name">Marvel Heroes</string>
+    <string name="sort_by_name">Ordenar por nombre</string>
+    <string name="sort_by_date">Ordenar por fecha de mod.</string>
+    <string name="sort_by_desc_name">Ordenar por nombre descendente</string>
+    <string name="sort_by_desc_date">Ordenar por fecha descendente</string>
+    <string name="detail_button">Detalle\n</string>
+    <string name="wiki_button">Wiki</string>
+    <string name="comic_button">Cómic</string>
+    <string name="other_button">Otro</string>
 </resources>

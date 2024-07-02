@@ -1,4 +1,4 @@
-package com.drewsoft.marvelapiapp.data.remote.model
+package com.drewsoft.marvelapiapp.data.remote.entity
 
 import com.google.gson.annotations.SerializedName
 
